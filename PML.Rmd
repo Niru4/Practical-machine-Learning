@@ -96,7 +96,7 @@ predMatrix = with(testing,table(tree.pred,classe))
 sum(diag(predMatrix))/sum(as.vector(predMatrix))
 ```
 
-Random Forest method has a a OOB estimate of error rate of 0.57% and that is better than the tree method
+Random Forest method has a a OOB estimate of error rate of 0.82%. 
 
 ```{r, echo=FALSE}
 rf.pred=predict(modelfit,testing,type="class")

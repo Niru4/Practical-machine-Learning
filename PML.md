@@ -59,7 +59,7 @@ aggr(pml_training, prop=FALSE, numbers=TRUE)
 ```
 
 ![](PML_files/figure-html/unnamed-chunk-1-1.png) 
-
+ This figure shows the features that have missing data or all the data as NA.  Its important to remove these features from the dataset as they don't add any value
 ```r
 Training2 <- pml_training
 for(i in c(8:ncol(pml_training)-1)) {pml_training[,i] = as.numeric(as.character(pml_training[,i]))}
@@ -76,7 +76,7 @@ remove = c('X', 'user_name', 'raw_timestamp_part_1', 'raw_timestamp_part_2', 'cv
 training.clean1 <- training_remov_na[, -which(names(training_remov_na) %in% remove)]
 dim(training.clean1)
 ```
-
+Removing all the unwanted features that don't add any value.  These irrelvant columns are from 1-8
 ```
 ## [1] 19622    53
 ```
@@ -86,7 +86,7 @@ Train1 <- training.clean1[complete.cases(training.clean1),]
 #head(Train1)
 dim(Train1)
 ```
-
+The final clean datset has 53 features
 ```
 ## [1] 19622    53
 ```
@@ -99,7 +99,7 @@ library(caret)
 ## Loading required package: lattice
 ## Loading required package: ggplot2
 ```
-
+Removing the features that are highly correlated to each other.  Used a arbitrary cut-off of 80%
 ```r
 corr <- cor(Train1[sapply(Train1, is.numeric)])
 corr80 <- findCorrelation(corr, cutoff=0.80, verbose=TRUE)
@@ -139,7 +139,7 @@ corr80 <- findCorrelation(corr, cutoff=0.80, verbose=TRUE)
 Train2 = Train1[, -corr80]
 dim(Train2)
 ```
-
+Removing the highly correlated features brings down the features to 40
 ```
 ## [1] 19622    40
 ```
@@ -188,7 +188,9 @@ Two different models are constructed to check the variables that are the best pr
 ## D    0    0   37 2211    4 0.018206039
 ## E    0    0    3    6 2516 0.003564356
 ```
+For random forest method, ensemble of 100 trees have been used.  The OOB error rate is 0.82% and the error rates for each type is really low as listed in the classification tree.
 
+Given below is the list of features based on its importance in model building.  The gini index and accuracy for each features in determining the outcome is listed in this table.
 ```
 ##                             A        B        C        D        E
 ## yaw_belt             57.33771 54.49245 46.23468 59.90784 39.88412
@@ -271,14 +273,15 @@ Two different models are constructed to check the variables that are the best pr
 ## magnet_forearm_y                 33.69986        200.09959
 ## magnet_forearm_z                 37.67077        256.95214
 ```
-
+This figure indicates the features and its importance for the classification
 ![](PML_files/figure-html/unnamed-chunk-3-1.png) 
 
+Accuracy of the Random forest methos is 0.9923
 ```
 ## [1] 0.9923534
 ```
 2. Tree model
-
+This model list the features that get selected for model building
 ```
 ## n= 13737 
 ## 
@@ -297,7 +300,7 @@ Two different models are constructed to check the variables that are the best pr
 ##       13) magnet_dumbbell_y>=438.5 1932 1010 B (0.03 0.48 0.042 0.2 0.25) *
 ##      7) magnet_belt_y< 555.5 1025  187 E (0.00098 0.0029 0.002 0.18 0.82) *
 ```
-
+Figure list the decision tree
 ![](PML_files/figure-html/unnamed-chunk-4-1.png) 
 
 ```
@@ -323,9 +326,9 @@ Random Forest method has a a OOB estimate of error rate of 0.57% and that is bet
 ```
 ## [1] 0.4924384
 ```
-With the test data, random forest method has 99.4% accuracy and the tree method has only 53.67%.  So Random forest method turns out to be a better model predictor
+With the test data, random forest method has 99.4% accuracy and the tree method has only 49.2%.  So Random forest method turns out to be a better model predictor
 
-
+###Predicting the testing data with the Random Forest model
 ```
 ##  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 
 ##  B  A  B  A  A  E  D  B  A  A  B  C  B  A  E  E  A  B  B  B 
