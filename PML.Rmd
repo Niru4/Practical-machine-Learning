@@ -1,0 +1,106 @@
+---
+output: html_document
+---
+PML Assignment
+---
+Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. The goal of this dataset is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants who performed activities using barbellcorrectly and incorrectly in 5 different ways and evaluate and quantify how well they perform the activity
+
+Report summary
+
+Based on the two machine learning models tested, the random forest method gave more accuracy in terms of determining the evaluating and quantifying the activity with all the data that was collected.  Some of the key features or data that were key in determining the final output were yaw_belt, magnet_dumbbell_z, gyros_arm_y, magnet_dumbbell_y, pitch_forearm.  The detailed methods foolowed in data clean up and models tested and prediction are described below.  Based on the modeltested with testing data sets the levels were predicted as Levels: A B C D E
+---
+title: "PML_assignment"
+output: html_document
+
+pandoc_args: [
+"+RTS", "-K100000m",
+"-RTS"
+]
+---
+
+
+
+First and foremost is to explore the datasets and handle the missing values.  The dataset from column 9 and above needs to be converted to numeric. There are lots of missing data.  Some columns(features) as shown in the figure are the missing values n the datasets.  All the columns with missing data is removed.  Some of the irrelevant features are removed from this dataset
+
+```{r}
+pml_training <- read.csv("~/Documents/Coursera/Practical Machine learning/pml-training-1.csv", na.strings=c("NA","#DIV/0!", ""))
+#head(pml_training)
+dim(pml_training)
+library(data.table)
+library(VIM)
+aggr(pml_training, prop=FALSE, numbers=TRUE)
+Training2 <- pml_training
+for(i in c(8:ncol(pml_training)-1)) {pml_training[,i] = as.numeric(as.character(pml_training[,i]))}
+training_remov_na <- Training2[ , colSums(is.na(Training2)) ==0]
+dim(training_remov_na)
+remove = c('X', 'user_name', 'raw_timestamp_part_1', 'raw_timestamp_part_2', 'cvtd_timestamp', 'new_window', 'num_window')
+training.clean1 <- training_remov_na[, -which(names(training_remov_na) %in% remove)]
+dim(training.clean1)
+Train1 <- training.clean1[complete.cases(training.clean1),]
+#head(Train1)
+dim(Train1)
+library(caret)
+corr <- cor(Train1[sapply(Train1, is.numeric)])
+corr80 <- findCorrelation(corr, cutoff=0.80, verbose=TRUE)
+Train2 = Train1[, -corr80]
+dim(Train2)
+```
+ Data Splitting for building a model
+```{r, echo=FALSE}
+inTrain <- createDataPartition(y=Train2$classe, p=0.7, list=FALSE)
+training <- Train2[inTrain,]; testing <- Train2[-inTrain,]
+dim(training);dim(testing)
+#summary(training)
+```
+Two diffrent models are constructed to check the variables that are the best predictors.  Random forest and a tree model is constructed using the training dataset
+
+```{r, echo=FALSE}
+library(doMC)
+numCores <- detectCores()
+registerDoMC(cores=numCores -1)
+library(caret)
+library(randomForest);set.seed(1234)
+modelfit <- randomForest(classe ~., data = training,  ntrees=100,importance = TRUE, allowParallel=TRUE)
+modelfit
+importance(modelfit)
+varImpPlot(modelfit)
+tree.pred=predict(modelfit,testing,type="class")
+predMatrix = with(testing,table(tree.pred,classe))
+sum(diag(predMatrix))/sum(as.vector(predMatrix))
+```
+
+```{r, echo=FALSE}
+library(caret)
+library(rpart)
+modFit2 <- train(classe ~., method="rpart", data=training)
+print(modFit2$finalModel)
+plot(modFit2$finalModel, uniform = TRUE, main="Classification Tree")
+text(modFit2$finalModel, use.n=TRUE, all=TRUE, cex=.8)
+library(rattle)
+library(RGtk2)
+fancyRpartPlot(modFit2$finalModel)
+tree.pred=predict(modFit2,testing)
+predMatrix = with(testing,table(tree.pred,classe))
+sum(diag(predMatrix))/sum(as.vector(predMatrix))
+```
+
+Random Forest method has a a OOB estimate of error rate of 0.57% and that is better than the tree method
+
+```{r, echo=FALSE}
+rf.pred=predict(modelfit,testing,type="class")
+predMatrix = with(testing,table(rf.pred,classe))
+sum(diag(predMatrix))/sum(as.vector(predMatrix))
+tree.pred=predict(modFit2,testing)
+predMatrix = with(testing,table(tree.pred,classe))
+sum(diag(predMatrix))/sum(as.vector(predMatrix))
+
+```
+With the test data, random forest method has 99.4% accuracy and the tree method has only 53.67%.  So Random forest method turns out to be a better model predictor
+
+```{r, echo=FALSE}
+Testing <- read.csv("~/Documents/Coursera/Practical Machine learning/pml-testing.csv")
+Final_data <- predict(modelfit, Testing)
+Final_data
+```
