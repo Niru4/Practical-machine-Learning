@@ -1,14 +1,15 @@
----
-output: html_document
----
-PML Assignment
----
-Background
 
+---
+output: 
+  html_document: 
+    keep_md: yes
+---
+##Background
+---
 Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. The goal of this dataset is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants who performed activities using barbellcorrectly and incorrectly in 5 different ways and evaluate and quantify how well they perform the activity
-
-Report summary
-
+---
+##Report summary
+---
 Based on the two machine learning models tested, the random forest method gave more accuracy in terms of determining the evaluating and quantifying the activity with all the data that was collected.  Some of the key features or data that were key in determining the final output were yaw_belt, magnet_dumbbell_z, gyros_arm_y, magnet_dumbbell_y, pitch_forearm.  The detailed methods foolowed in data clean up and models tested and prediction are described below.  Based on the modeltested with testing data sets the levels were predicted as Levels: A B C D E
 ---
 title: "PML_assignment"
@@ -21,11 +22,12 @@ pandoc_args: [
 ---
 
 
-
-First and foremost is to explore the datasets and handle the missing values.  The dataset from column 9 and above needs to be converted to numeric. There are lots of missing data.  Some columns(features) as shown in the figure are the missing values n the datasets.  All the columns with missing data is removed.  Some of the irrelevant features are removed from this dataset
+###Data Clean up and Processing
+---
+First and foremost is to explore the datasets and handle the missing values.  The dataset from column 9 and above needs to be converted to numeric. There are lots of missing data.  Missing data is shown in the figure. Some columns(features) as shown in the figure are the missing values n the datasets.  All the columns with missing data is removed.  Some of the irrelevant features are removed from this dataset. Some features that have datasets like ids are removed.  Basically the first 8 columns are removed. The features that are highly correlated with a cut off grreater than 80% are removed.
 
 ```{r}
-pml_training <- read.csv("~/Documents/Coursera/Practical Machine learning/pml-training-1.csv", na.strings=c("NA","#DIV/0!", ""))
+pml_training <- read.csv("~/Documents/Coursera/Practical Machine learning/Assignment/Practical-machine-Learning/pml-training-1.csv", na.strings=c("NA","#DIV/0!", ""))
 #head(pml_training)
 dim(pml_training)
 library(data.table)
@@ -47,14 +49,22 @@ corr80 <- findCorrelation(corr, cutoff=0.80, verbose=TRUE)
 Train2 = Train1[, -corr80]
 dim(Train2)
 ```
- Data Splitting for building a model
+---
+###Data Splitting for building a model
+---
+The reduced dataset Train2 is split into training and testing the model.
+
 ```{r, echo=FALSE}
 inTrain <- createDataPartition(y=Train2$classe, p=0.7, list=FALSE)
 training <- Train2[inTrain,]; testing <- Train2[-inTrain,]
 dim(training);dim(testing)
 #summary(training)
 ```
-Two diffrent models are constructed to check the variables that are the best predictors.  Random forest and a tree model is constructed using the training dataset
+---
+###Model Building
+---
+Two different models are constructed to check the variables that are the best predictors.  Random forest and a tree model is constructed using the training dataset
+1. Random Forest model
 
 ```{r, echo=FALSE}
 library(doMC)
@@ -70,7 +80,7 @@ tree.pred=predict(modelfit,testing,type="class")
 predMatrix = with(testing,table(tree.pred,classe))
 sum(diag(predMatrix))/sum(as.vector(predMatrix))
 ```
-
+2. Tree model
 ```{r, echo=FALSE}
 library(caret)
 library(rpart)
@@ -100,7 +110,7 @@ sum(diag(predMatrix))/sum(as.vector(predMatrix))
 With the test data, random forest method has 99.4% accuracy and the tree method has only 53.67%.  So Random forest method turns out to be a better model predictor
 
 ```{r, echo=FALSE}
-Testing <- read.csv("~/Documents/Coursera/Practical Machine learning/pml-testing.csv")
+Testing <- read.csv("~/Documents/Coursera/Practical Machine learning/Assignment/Practical-machine-Learning/pml-testing.csv")
 Final_data <- predict(modelfit, Testing)
 Final_data
 ```
